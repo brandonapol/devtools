@@ -1,0 +1,38 @@
+---
+# Git Configuration
+
+- name: Configure Git user name
+  git_config:
+    name: user.name
+    value: "Brandon Apol"
+    scope: global
+
+- name: Configure Git user email
+  git_config:
+    name: user.email
+    value: "brandonapol@cedarville.edu"
+    scope: global
+
+- name: Configure Git default editor
+  git_config:
+    name: core.editor
+    value: "vim"
+    scope: global
+
+- name: Configure Git default branch name
+  git_config:
+    name: init.defaultBranch
+    value: "main"
+    scope: global
+
+- name: Configure Git pull behavior
+  git_config:
+    name: pull.rebase
+    value: "false"
+    scope: global
+
+- name: Configure Git push behavior
+  git_config:
+    name: push.default
+    value: "simple"
+    scope: global 

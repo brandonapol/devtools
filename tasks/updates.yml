@@ -1,0 +1,176 @@
+---
+# Updates and Upgrades
+
+- name: Upgrade Homebrew packages (macOS)
+  homebrew:
+    upgrade_all: true
+  when: ansible_os_family == "Darwin"
+
+- name: Upgrade apt packages (Ubuntu)
+  apt:
+    upgrade: dist
+    update_cache: true
+    autoremove: true
+    autoclean: true
+  become: true
+  when: ansible_os_family == "Debian"
+
+- name: Update Node.js to latest LTS via NVM
+  shell: |
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    nvm install --lts --reinstall-packages-from=current
+    nvm use --lts
+    nvm alias default lts/*
+  args:
+    executable: /bin/bash
+  register: node_update_result
+  changed_when: "'is already installed' not in node_update_result.stdout"
+
+- name: Update Bun to latest version
+  shell: curl -fsSL https://bun.sh/install | bash
+  register: bun_update_result
+  changed_when: "'Bun was updated successfully' in bun_update_result.stdout or 'Bun was installed successfully' in bun_update_result.stdout"
+
+- name: Update Go to latest version (macOS)
+  homebrew:
+    name: go
+    state: latest
+  when: ansible_os_family == "Darwin"
+
+- name: Update Go to latest version (Ubuntu)
+  block:
+    - name: Get latest Go version
+      uri:
+        url: https://api.github.com/repos/golang/go/releases/latest
+        return_content: true
+      register: go_latest_release
+
+    - name: Extract Go version
+      set_fact:
+        go_latest_version: "{{ go_latest_release.json.tag_name | regex_replace('^go') }}"
+
+    - name: Download latest Go binary
+      get_url:
+        url: "https://go.dev/dl/go{{ go_latest_version }}.linux-amd64.tar.gz"
+        dest: "/tmp/go{{ go_latest_version }}.linux-amd64.tar.gz"
+        mode: '0644'
+
+    - name: Remove existing Go installation
+      file:
+        path: /usr/local/go
+        state: absent
+      become: true
+
+    - name: Extract latest Go binary
+      unarchive:
+        src: "/tmp/go{{ go_latest_version }}.linux-amd64.tar.gz"
+        dest: /usr/local
+        remote_src: true
+      become: true
+
+    - name: Clean up Go download
+      file:
+        path: "/tmp/go{{ go_latest_version }}.linux-amd64.tar.gz"
+        state: absent
+  when: ansible_os_family == "Debian"
+
+- name: Update kubectl to latest version (macOS)
+  homebrew:
+    name: kubectl
+    state: latest
+  when: ansible_os_family == "Darwin"
+
+- name: Update kubectl to latest version (Ubuntu)
+  apt:
+    name: kubectl
+    state: latest
+    update_cache: true
+  become: true
+  when: ansible_os_family == "Debian"
+
+- name: Update Helm to latest version (macOS)
+  homebrew:
+    name: helm
+    state: latest
+  when: ansible_os_family == "Darwin"
+
+- name: Update Helm to latest version (Ubuntu)
+  apt:
+    name: helm
+    state: latest
+    update_cache: true
+  become: true
+  when: ansible_os_family == "Debian"
+
+- name: Update k9s to latest version (macOS)
+  homebrew:
+    name: k9s
+    state: latest
+  when: ansible_os_family == "Darwin"
+
+- name: Update k9s to latest version (Ubuntu)
+  block:
+    - name: Download latest k9s binary
+      get_url:
+        url: "https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_amd64.tar.gz"
+        dest: "/tmp/k9s_Linux_amd64_latest.tar.gz"
+        mode: '0644'
+
+    - name: Create k9s update directory
+      file:
+        path: /tmp/k9s_update
+        state: directory
+        mode: '0755'
+
+    - name: Extract latest k9s binary
+      unarchive:
+        src: "/tmp/k9s_Linux_amd64_latest.tar.gz"
+        dest: /tmp/k9s_update
+        remote_src: true
+
+    - name: Update k9s binary
+      copy:
+        src: /tmp/k9s_update/k9s
+        dest: /usr/local/bin/k9s
+        mode: '0755'
+        remote_src: true
+      become: true
+
+    - name: Clean up k9s update files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/k9s_Linux_amd64_latest.tar.gz
+        - /tmp/k9s_update
+  when: ansible_os_family == "Debian"
+
+- name: Update global npm packages
+  shell: |
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    npm update -g
+  args:
+    executable: /bin/bash
+  register: npm_update_result
+  changed_when: "'updated' in npm_update_result.stdout"
+
+- name: Update VS Code extensions
+  shell: code --update-extensions
+  register: vscode_update_result
+  changed_when: "'already up-to-date' not in vscode_update_result.stdout"
+  failed_when: false
+
+- name: Update bash completion files
+  shell: |
+    if command -v kubectl &>/dev/null; then
+      kubectl completion bash > /etc/bash_completion.d/kubectl 2>/dev/null || true
+    fi
+    if command -v helm &>/dev/null; then
+      helm completion bash > /etc/bash_completion.d/helm 2>/dev/null || true
+    fi
+  become: true
+  register: bash_completion_update
+  changed_when: bash_completion_update.rc == 0
+  failed_when: false 

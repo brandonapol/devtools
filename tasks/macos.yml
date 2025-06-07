@@ -1,0 +1,72 @@
+---
+# macOS System Preferences
+
+- name: Configure macOS system preferences
+  osx_defaults:
+    domain: "{{ item.domain }}"
+    key: "{{ item.key }}"
+    type: "{{ item.type }}"
+    value: "{{ item.value }}"
+  loop:
+    # Dock preferences
+    - { domain: "com.apple.dock", key: "autohide", type: "bool", value: true }
+    - { domain: "com.apple.dock", key: "autohide-delay", type: "float", value: 0.0 }
+    - { domain: "com.apple.dock", key: "autohide-time-modifier", type: "float", value: 0.2 }
+    - { domain: "com.apple.dock", key: "tilesize", type: "int", value: 48 }
+    - { domain: "com.apple.dock", key: "show-recents", type: "bool", value: false }
+    
+    # Finder preferences
+    - { domain: "com.apple.finder", key: "AppleShowAllFiles", type: "bool", value: true }
+    - { domain: "com.apple.finder", key: "ShowPathbar", type: "bool", value: true }
+    - { domain: "com.apple.finder", key: "ShowStatusBar", type: "bool", value: true }
+    - { domain: "com.apple.finder", key: "FXDefaultSearchScope", type: "string", value: "SCcf" }
+    
+    # Global preferences
+    - { domain: "NSGlobalDomain", key: "AppleShowAllExtensions", type: "bool", value: true }
+    - { domain: "NSGlobalDomain", key: "NSAutomaticCapitalizationEnabled", type: "bool", value: false }
+    - { domain: "NSGlobalDomain", key: "NSAutomaticDashSubstitutionEnabled", type: "bool", value: false }
+    - { domain: "NSGlobalDomain", key: "NSAutomaticPeriodSubstitutionEnabled", type: "bool", value: false }
+    - { domain: "NSGlobalDomain", key: "NSAutomaticQuoteSubstitutionEnabled", type: "bool", value: false }
+    - { domain: "NSGlobalDomain", key: "NSAutomaticSpellingCorrectionEnabled", type: "bool", value: false }
+    
+    # Terminal preferences
+    - { domain: "com.apple.terminal", key: "StringEncodings", type: "array", value: [4] }
+  when: ansible_os_family == "Darwin"
+
+- name: Configure screenshot location
+  osx_defaults:
+    domain: com.apple.screencapture
+    key: location
+    type: string
+    value: "{{ user_home }}/Desktop"
+  when: ansible_os_family == "Darwin"
+
+- name: Configure screenshot format to PNG
+  osx_defaults:
+    domain: com.apple.screencapture
+    key: type
+    type: string
+    value: png
+  when: ansible_os_family == "Darwin"
+
+- name: Disable shadow in screenshots
+  osx_defaults:
+    domain: com.apple.screencapture
+    key: disable-shadow
+    type: bool
+    value: true
+  when: ansible_os_family == "Darwin"
+
+- name: Configure Trackpad preferences
+  osx_defaults:
+    domain: "{{ item.domain }}"
+    key: "{{ item.key }}"
+    type: "{{ item.type }}"
+    value: "{{ item.value }}"
+  loop:
+    - { domain: "com.apple.AppleMultitouchTrackpad", key: "Clicking", type: "bool", value: true }
+    - { domain: "com.apple.driver.AppleBluetoothMultitouch.trackpad", key: "Clicking", type: "bool", value: true }
+    - { domain: "NSGlobalDomain", key: "com.apple.mouse.tapBehavior", type: "int", value: 1 }
+  when: ansible_os_family == "Darwin"
+
+ 

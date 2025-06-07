@@ -1,0 +1,78 @@
+---
+# Node.js and Bun Setup
+
+- name: Check if NVM is installed
+  stat:
+    path: "{{ user_home }}/.nvm"
+  register: nvm_installed
+
+- name: Install NVM
+  shell: |
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+  when: not nvm_installed.stat.exists
+
+- name: Source NVM in shell profile
+  blockinfile:
+    path: "{{ user_home }}/.bashrc"
+    block: |
+      # NVM Configuration
+      export NVM_DIR="$HOME/.nvm"
+      [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+      [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+    marker: "# {mark} ANSIBLE MANAGED NVM BLOCK"
+    create: true
+
+- name: Install Node.js LTS via NVM
+  shell: |
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    nvm install --lts
+    nvm use --lts
+    nvm alias default lts/*
+  args:
+    executable: /bin/bash
+  register: node_install_result
+  changed_when: "'already installed' not in node_install_result.stdout"
+
+- name: Install Bun (macOS)
+  shell: curl -fsSL https://bun.sh/install | bash
+  when: ansible_os_family == "Darwin"
+  register: bun_install_macos
+  changed_when: "'Bun was installed successfully' in bun_install_macos.stdout"
+
+- name: Install Bun (Ubuntu)
+  shell: curl -fsSL https://bun.sh/install | bash
+  when: ansible_os_family == "Debian"
+  register: bun_install_ubuntu
+  changed_when: "'Bun was installed successfully' in bun_install_ubuntu.stdout"
+
+- name: Add Bun to PATH in shell profile
+  blockinfile:
+    path: "{{ user_home }}/.bashrc"
+    block: |
+      # Bun Configuration
+      export BUN_INSTALL="$HOME/.bun"
+      export PATH="$BUN_INSTALL/bin:$PATH"
+    marker: "# {mark} ANSIBLE MANAGED BUN BLOCK"
+    create: true
+
+- name: Install global npm packages
+  shell: |
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    npm install -g \
+      typescript \
+      ts-node \
+      @vue/cli \
+      @angular/cli \
+      create-react-app \
+      prettier \
+      eslint \
+      nodemon \
+      pm2 \
+      vercel \
+      netlify-cli
+  args:
+    executable: /bin/bash
+  register: npm_global_install
+  changed_when: "'added' in npm_global_install.stdout" 

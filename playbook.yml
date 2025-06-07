@@ -1,0 +1,38 @@
+---
+- name: Setup Development Environment
+  hosts: localhost
+  become: false
+  gather_facts: true
+  
+  vars:
+    user_home: "{{ ansible_env.HOME }}"
+    
+  tasks:
+    - name: Include core system setup
+      include_tasks: tasks/core.yml
+      
+    - name: Include package installation
+      include_tasks: tasks/homebrew.yml
+      
+    - name: Include Node.js setup
+      include_tasks: tasks/nodejs.yml
+      
+    - name: Include VS Code setup
+      include_tasks: tasks/vscode.yml
+      
+    - name: Include Git setup
+      include_tasks: tasks/git.yml
+      
+    - name: Include Shell setup
+      include_tasks: tasks/shell.yml
+      
+    - name: Include macOS preferences
+      include_tasks: tasks/macos.yml
+      
+    - name: Include hosts configuration
+      include_tasks: tasks/hosts.yml
+      
+  handlers:
+    - name: restart_dock
+      shell: killall Dock
+      when: ansible_os_family == "Darwin" 

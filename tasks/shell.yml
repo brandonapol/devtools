@@ -1,0 +1,209 @@
+---
+# Shell Configuration
+
+- name: Create custom bash configuration
+  blockinfile:
+    path: "{{ user_home }}/.bashrc"
+    block: |
+      # Repository and Environment Setup
+      export REPO=~/repo
+      # Source local development overrides if they exist
+      if [ -f "$HOME/.bashrc-dev" ]; then
+          source "$HOME/.bashrc-dev"
+      fi
+
+      
+      # Custom Prompt and Git Functions
+      parse_git_branch() {
+          git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/' -e 's/^\(.\{9\}\).*/(\1)/'
+      }
+      parse_git_branch_full() {
+          git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
+      }
+      
+      # Custom Bash Prompt (not zsh)
+      PS1='🐻 \[\033[01;32m\]$(hostname)\[\033[00m\] \[\033[01;35m\]$(kubectl config current-context 2>/dev/null)\[\033[01;32m\] \[\033[01;36m\]\W\[\033[01;32m\] \[\033[01;33m\]$(parse_git_branch_full)\[\033[01;32m\] $\[\033[00m\] '
+      
+      # Kubernetes Context Switching
+      alias point_minikube='export KUBECONFIG=/home/brandon/.kube/config'
+      alias point_rsf='export KUBECONFIG=/home/brandon/.kube/rsf-config.yaml && kubectl config use rsf-admin'
+      alias point_pir='export KUBECONFIG=/home/brandon/.kube/pir-config.yaml && kubectl config use pir-admin'
+      alias letsArgo="kubectl apply -f $REPO/md-k8s-deployment/cluster-configs/app-sets/local/"
+      
+      # Git Workflow Aliases
+      alias gcd='git checkout develop'
+      alias gadd='git add .'
+      alias gpoh='git push origin HEAD'
+      
+      # Navigation
+      alias ".."="cd ../"
+      alias "..."="cd ../.."
+      alias ll='ls -alF'
+      alias la='ls -A'
+      alias l='ls -CF'
+      
+      # Minikube Docker Environment
+      alias fixEnv='eval $(minikube docker-env)'
+      alias exitEnv='eval $(minikube docker-env -u)'
+      alias eod="minikube stop && shutdown now"
+      
+      # Git Workflow Functions
+      gacp() {
+        if [ -z "$1" ]; then
+          echo "Error: No commit message provided."
+          echo "Usage: gacp <commit_message>"
+          return 1
+        fi
+        git add .
+        if [ $? -ne 0 ]; then
+          echo "Failed to add changes."
+          return 1
+        fi
+        git commit -m "$1"
+        if [ $? -ne 0 ]; then
+          echo "Commit failed."
+          return 1
+        fi
+        git push origin HEAD
+        if [ $? -ne 0 ]; then
+          echo "Push failed."
+          return 1
+        fi
+        echo "Git add, commit, and push completed successfully."
+      }
+      
+      gac() {
+        if [ -z "$1" ]; then
+          echo "Error: No commit message provided."
+          echo "Usage: gac <commit_message>"
+          return 1
+        fi
+        git add .
+        if [ $? -ne 0 ]; then
+          echo "Failed to add changes."
+          return 1
+        fi
+        git commit -m "$1"
+        if [ $? -ne 0 ]; then
+          echo "Commit failed."
+          return 1
+        fi
+        echo "Git add and commit completed successfully."
+      }
+      
+      # Development Environment Functions
+      function goodmorning() {
+          echo " __    __     _                              ___                     _             "
+          echo "/ / /\\ \\ \\___| | ___ ___  _ __ ___   ___    / __\\_ __ __ _ _ __   __| | ___  _ __  "
+          echo "\\ \\/  \\/ / _ \\ |/ __/ _ \\| '_ \` _ \\ / _ \\  /__/\\// '__/ _\` | '_ \\ / _\` |/ _ \\| '_ \\ "
+          echo " \\  /\\  /  __/ | (_| (_) | | | | | |  __/ / \\/  \\| | (_| | | | | (_| | (_) | | | |"
+          echo "  \\/  \\/ \\___|_|\\___\\___/|_| |_| |_|\\___| \\_____/|_|  \\__,_|_| |_|\\__,_|\\___/|_| |_|"
+          echo "                                                                                   "
+          code $REPO/md-k8s-deployment
+          minikube start
+          gnome-terminal --tab -- bash -c "minikube tunnel" 2>/dev/null || echo "Note: gnome-terminal not available on macOS"
+      }
+      
+      function r_goodmorning() {
+          echo " __    __     _                              ___                     _             "
+          echo "/ / /\\ \\ \\___| | ___ ___  _ __ ___   ___    / __\\_ __ __ _ _ __   __| | ___  _ __  "
+          echo "\\ \\/  \\/ / _ \\ |/ __/ _ \\| '_ \` _ \\ / _ \\  /__/\\// '__/ _\` | '_ \\ / _\` |/ _ \\| '_ \\ "
+          echo " \\  /\\  /  __/ | (_| (_) | | | | | |  __/ / \\/  \\| | (_| | | | | (_| | (_) | | | |"
+          echo "  \\/  \\/ \\___|_|\\___\\___/|_| |_| |_|\\___| \\_____/|_|  \\__,_|_| |_|\\__,_|\\___/|_| |_|"
+          echo "                                                                                   "
+          code rsf-platform/
+          gnome-terminal --tab -- bash -c 'point_rsf && watch "kubectl get pods -A; echo; echo; kubectl get services -A"' 2>/dev/null || echo "Note: gnome-terminal not available on macOS"
+      }
+      
+      # Network Configuration Function
+      update_resolv_conf() {
+        echo "nameserver 127.0.0.53
+      nameserver 10.10.10.49
+      nameserver 1.1.1.1
+      options edns0 trust-ad
+      search mshome.net" | sudo tee /etc/resolv.conf > /dev/null
+      }
+      
+      
+      # Path Configurations
+      export PATH="$PATH:/usr/local/go/bin"
+      export PATH="$HOME/atlassian-plugin-sdk-8.2.7/bin:$PATH"
+      export PATH="$PATH:/opt/nvim-linux64/bin"
+      export PATH=$PWD/bin:$PATH
+      export PATH=$PATH:/Users/$USER/go/bin/
+      export PATH=$HOME/.istioctl/bin:$PATH
+      
+      # macOS specific path
+      if [[ "$OSTYPE" == "darwin"* ]]; then
+          export PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
+      fi
+      
+      # Linux specific paths
+      if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+          export PATH="$PATH:/home/brandon/repo/md-k8s-deployment/cluster-nodes/reporter/reporter-ui/istio-1.20.3/bin"
+      fi
+      
+      # Environment Variables
+      export EDITOR=vim
+      
+      # Development helpers with Bun priority
+      function dev_server() {
+          if command -v bun &> /dev/null; then
+              echo "Starting development server with Bun..."
+              bun dev
+          elif command -v npm &> /dev/null; then
+              echo "Starting development server with npm..."
+              npm run dev
+          else
+              echo "No package manager found"
+          fi
+      }
+      
+      function build_project() {
+          if command -v bun &> /dev/null; then
+              echo "Building project with Bun..."
+              bun run build
+          elif command -v npm &> /dev/null; then
+              echo "Building project with npm..."
+              npm run build
+          else
+              echo "No package manager found"
+          fi
+      }
+    marker: "# {mark} ANSIBLE MANAGED SHELL CONFIGURATION"
+    create: true
+
+- name: Set bash as default shell (Ubuntu)
+  shell: chsh -s $(which bash)
+  when: ansible_os_family == "Debian"
+  register: shell_change
+  changed_when: "'Shell changed' in shell_change.stdout"
+  failed_when: false
+
+- name: Ensure bash completion is enabled (Ubuntu)
+  apt:
+    name: bash-completion
+    state: present
+  become: true
+  when: ansible_os_family == "Debian"
+
+- name: Install bash completion for kubectl
+  shell: kubectl completion bash > /etc/bash_completion.d/kubectl
+  become: true
+  failed_when: false
+
+- name: Install bash completion for helm
+  shell: helm completion bash > /etc/bash_completion.d/helm
+  become: true
+  failed_when: false
+
+- name: Source bash completion in profile
+  lineinfile:
+    path: "{{ user_home }}/.bashrc"
+    line: "{{ item }}"
+    create: true
+  loop:
+    - "# Enable bash completion"
+    - "if [ -f /etc/bash_completion ]; then"
+    - "    . /etc/bash_completion"
+    - "fi" 
