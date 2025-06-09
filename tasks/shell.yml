@@ -26,9 +26,6 @@
       
       # Kubernetes Context Switching
       alias point_minikube='export KUBECONFIG=/home/brandon/.kube/config'
-      alias point_rsf='export KUBECONFIG=/home/brandon/.kube/rsf-config.yaml && kubectl config use rsf-admin'
-      alias point_pir='export KUBECONFIG=/home/brandon/.kube/pir-config.yaml && kubectl config use pir-admin'
-      alias letsArgo="kubectl apply -f $REPO/md-k8s-deployment/cluster-configs/app-sets/local/"
       
       # Git Workflow Aliases
       alias gcd='git checkout develop'
@@ -99,21 +96,10 @@
           echo " \\  /\\  /  __/ | (_| (_) | | | | | |  __/ / \\/  \\| | (_| | | | | (_| | (_) | | | |"
           echo "  \\/  \\/ \\___|_|\\___\\___/|_| |_| |_|\\___| \\_____/|_|  \\__,_|_| |_|\\__,_|\\___/|_| |_|"
           echo "                                                                                   "
-          code $REPO/md-k8s-deployment
           minikube start
           gnome-terminal --tab -- bash -c "minikube tunnel" 2>/dev/null || echo "Note: gnome-terminal not available on macOS"
       }
       
-      function r_goodmorning() {
-          echo " __    __     _                              ___                     _             "
-          echo "/ / /\\ \\ \\___| | ___ ___  _ __ ___   ___    / __\\_ __ __ _ _ __   __| | ___  _ __  "
-          echo "\\ \\/  \\/ / _ \\ |/ __/ _ \\| '_ \` _ \\ / _ \\  /__/\\// '__/ _\` | '_ \\ / _\` |/ _ \\| '_ \\ "
-          echo " \\  /\\  /  __/ | (_| (_) | | | | | |  __/ / \\/  \\| | (_| | | | | (_| | (_) | | | |"
-          echo "  \\/  \\/ \\___|_|\\___\\___/|_| |_| |_|\\___| \\_____/|_|  \\__,_|_| |_|\\__,_|\\___/|_| |_|"
-          echo "                                                                                   "
-          code rsf-platform/
-          gnome-terminal --tab -- bash -c 'point_rsf && watch "kubectl get pods -A; echo; echo; kubectl get services -A"' 2>/dev/null || echo "Note: gnome-terminal not available on macOS"
-      }
       
       # Network Configuration Function
       update_resolv_conf() {
@@ -131,16 +117,11 @@
       export PATH="$PATH:/opt/nvim-linux64/bin"
       export PATH=$PWD/bin:$PATH
       export PATH=$PATH:/Users/$USER/go/bin/
-      export PATH=$HOME/.istioctl/bin:$PATH
+      export PATH="$PATH:/usr/local/bin"
       
       # macOS specific path
       if [[ "$OSTYPE" == "darwin"* ]]; then
           export PATH="$(brew --prefix)/opt/make/libexec/gnubin:$PATH"
-      fi
-      
-      # Linux specific paths
-      if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-          export PATH="$PATH:/home/brandon/repo/md-k8s-deployment/cluster-nodes/reporter/reporter-ui/istio-1.20.3/bin"
       fi
       
       # Environment Variables
@@ -194,6 +175,16 @@
 
 - name: Install bash completion for helm
   shell: helm completion bash > /etc/bash_completion.d/helm
+  become: true
+  failed_when: false
+
+- name: Install bash completion for minikube
+  shell: minikube completion bash > /etc/bash_completion.d/minikube
+  become: true
+  failed_when: false
+
+- name: Install bash completion for istioctl
+  shell: istioctl completion bash > /etc/bash_completion.d/istioctl
   become: true
   failed_when: false
 

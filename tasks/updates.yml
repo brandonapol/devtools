@@ -146,6 +146,101 @@
         - /tmp/k9s_update
   when: ansible_os_family == "Debian"
 
+- name: Update minikube to latest version (macOS)
+  homebrew:
+    name: minikube
+    state: latest
+  when: ansible_os_family == "Darwin"
+
+- name: Update minikube to latest version (Ubuntu)
+  block:
+    - name: Download latest minikube binary
+      get_url:
+        url: "https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64"
+        dest: "/tmp/minikube-latest"
+        mode: '0755'
+
+    - name: Update minikube binary
+      copy:
+        src: /tmp/minikube-latest
+        dest: /usr/local/bin/minikube
+        mode: '0755'
+        remote_src: true
+      become: true
+
+    - name: Clean up minikube update files
+      file:
+        path: /tmp/minikube-latest
+        state: absent
+  when: ansible_os_family == "Debian"
+
+- name: Update istioctl to latest version (macOS)
+  homebrew:
+    name: istioctl
+    state: latest
+  when: ansible_os_family == "Darwin"
+
+- name: Update istioctl to latest version (Ubuntu)
+  block:
+    - name: Get latest istio version
+      uri:
+        url: https://api.github.com/repos/istio/istio/releases/latest
+        return_content: true
+      register: istio_latest_release
+
+    - name: Extract istio version
+      set_fact:
+        istio_latest_version: "{{ istio_latest_release.json.tag_name }}"
+
+    - name: Download latest istio release
+      get_url:
+        url: "https://github.com/istio/istio/releases/latest/download/istio-{{ istio_latest_version }}-linux-amd64.tar.gz"
+        dest: "/tmp/istio-{{ istio_latest_version }}-linux-amd64.tar.gz"
+        mode: '0644'
+
+    - name: Create istio update directory
+      file:
+        path: /tmp/istio_update
+        state: directory
+        mode: '0755'
+
+    - name: Extract latest istio
+      unarchive:
+        src: "/tmp/istio-{{ istio_latest_version }}-linux-amd64.tar.gz"
+        dest: /tmp/istio_update
+        remote_src: true
+
+    - name: Update istioctl binary
+      copy:
+        src: "/tmp/istio_update/istio-{{ istio_latest_version }}/bin/istioctl"
+        dest: /usr/local/bin/istioctl
+        mode: '0755'
+        remote_src: true
+      become: true
+
+    - name: Clean up istio update files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/tmp/istio-{{ istio_latest_version }}-linux-amd64.tar.gz"
+        - /tmp/istio_update
+  when: ansible_os_family == "Debian"
+
+- name: Update .NET SDK to latest version (macOS)
+  homebrew_cask:
+    name: dotnet
+    state: latest
+  when: ansible_os_family == "Darwin"
+
+- name: Update .NET SDK to latest version (Ubuntu)
+  apt:
+    name: dotnet-sdk-8.0
+    state: latest
+    update_cache: true
+  become: true
+  when: ansible_os_family == "Debian"
+
 - name: Update global npm packages
   shell: |
     export NVM_DIR="$HOME/.nvm"
@@ -169,6 +264,12 @@
     fi
     if command -v helm &>/dev/null; then
       helm completion bash > /etc/bash_completion.d/helm 2>/dev/null || true
+    fi
+    if command -v minikube &>/dev/null; then
+      minikube completion bash > /etc/bash_completion.d/minikube 2>/dev/null || true
+    fi
+    if command -v istioctl &>/dev/null; then
+      istioctl completion bash > /etc/bash_completion.d/istioctl 2>/dev/null || true
     fi
   become: true
   register: bash_completion_update

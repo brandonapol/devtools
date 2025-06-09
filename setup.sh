@@ -4,6 +4,23 @@ set -e
 
 echo "🚀 Setting up development environment with Ansible..."
 
+# Clone the devtools repository if it doesn't exist
+DEVTOOLS_DIR="$HOME/devtools"
+if [ ! -d "$DEVTOOLS_DIR" ]; then
+    echo "📦 Cloning devtools repository..."
+    git clone https://github.com/brandonapol/devtools.git "$DEVTOOLS_DIR"
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to clone repository. Please check your internet connection and try again."
+        exit 1
+    fi
+else
+    echo "✅ devtools repository already exists"
+fi
+
+# Change to the devtools directory
+cd "$DEVTOOLS_DIR"
+echo "📁 Working from: $(pwd)"
+
 # Detect OS
 OS=""
 if [[ "$OSTYPE" == "darwin"* ]]; then
