@@ -1,0 +1,6 @@
+---
+- name: VS Code Configuration
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - include_tasks: ../tasks/vscode.yml 

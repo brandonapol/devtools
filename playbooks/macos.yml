@@ -1,0 +1,10 @@
+---
+- name: macOS System Preferences
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - include_tasks: ../tasks/macos.yml
+  handlers:
+    - name: restart_dock
+      shell: killall Dock
+      when: ansible_os_family == "Darwin" 

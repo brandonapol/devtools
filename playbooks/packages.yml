@@ -1,0 +1,11 @@
+---
+- name: Package Installation
+  hosts: localhost
+  become: true
+  gather_facts: true
+  
+  vars:
+    user_home: "{{ ansible_env.HOME }}"
+    
+  tasks:
+    - include_tasks: ../tasks/homebrew.yml 

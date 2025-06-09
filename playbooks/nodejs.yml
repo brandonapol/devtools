@@ -1,0 +1,6 @@
+---
+- name: Node.js and JavaScript Setup
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - include_tasks: ../tasks/nodejs.yml 

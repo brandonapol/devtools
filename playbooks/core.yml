@@ -1,0 +1,7 @@
+---
+- name: Core System Setup
+  hosts: localhost
+  become: true
+  gather_facts: true
+  tasks:
+    - include_tasks: ../tasks/core.yml 

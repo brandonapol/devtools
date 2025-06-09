@@ -1,0 +1,7 @@
+---
+- name: Update All Development Tools
+  hosts: localhost
+  become: true
+  gather_facts: true
+  tasks:
+    - include_tasks: ../tasks/updates.yml 

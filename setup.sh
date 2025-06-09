@@ -90,13 +90,8 @@ elif [[ "$OS" == "ubuntu" ]]; then
     fi
 fi
 
-# Run the main playbook
-echo "🎭 Running Ansible playbook..."
-# You can use either inventory format:
-# ansible-playbook -i inventory.yml playbook.yml --ask-become-pass  # YAML format
-# ansible-playbook -i hosts playbook.yml --ask-become-pass         # Traditional format
+# Now run the full setup using our run script
+echo "🎭 Running full development environment setup..."
+./run.sh all
 
-ansible-playbook -i inventory.yml playbook.yml --ask-become-pass
-
-echo "✨ Development environment setup complete!"
-echo "🔄 Please restart your terminal or run 'source ~/.bashrc' to apply all changes" 
+echo "🎉 Setup complete! Please restart your terminal or run 'source ~/.bashrc' to apply all changes." 

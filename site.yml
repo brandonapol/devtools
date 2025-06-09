@@ -1,0 +1,10 @@
+---
+# Main site playbook - runs full development environment setup
+- import_playbook: playbooks/core.yml
+- import_playbook: playbooks/packages.yml  
+- import_playbook: playbooks/nodejs.yml
+- import_playbook: playbooks/vscode.yml
+- import_playbook: playbooks/git.yml
+- import_playbook: playbooks/shell.yml
+- import_playbook: playbooks/macos.yml
+- import_playbook: playbooks/hosts.yml 
