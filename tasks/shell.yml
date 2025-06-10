@@ -194,7 +194,7 @@
 
 - name: Source bash completion in profile
   lineinfile:
-    path: "{{ user_home }}/.bashrc"
+    path: "~/.bashrc"
     line: "{{ item }}"
     create: true
   loop:
