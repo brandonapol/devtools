@@ -2,9 +2,10 @@
 # Shell Configuration
 
 - name: Create custom bash configuration
-  blockinfile:
-    path: "{{ user_home }}/.bashrc"
-    block: |
+  copy:
+    dest: "~/.bashrc"
+    force: true
+    content: |
       # Repository and Environment Setup
       export REPO=~/repo
       # Source local development overrides if they exist
@@ -151,8 +152,11 @@
               echo "No package manager found"
           fi
       }
-    marker: "# {mark} ANSIBLE MANAGED SHELL CONFIGURATION"
-    create: true
+      
+      # Enable bash completion
+      if [ -f /etc/bash_completion ]; then
+          . /etc/bash_completion
+      fi
 
 - name: Set bash as default shell (Ubuntu)
   shell: chsh -s $(which bash)
